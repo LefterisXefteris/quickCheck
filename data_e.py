@@ -10,8 +10,10 @@ from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt
 import json
 from torchvision import transforms
+import torch
+from torchvision.transforms import v2
 
-class FootballDataset:
+class FootballDataset(Dataset):
     def __init__(self, data_dir="../football"):
         data_dir = Path(data_dir)
         root_dir_data = [x for x in data_dir.iterdir() if x.is_dir()]
@@ -21,10 +23,12 @@ class FootballDataset:
         
         self.images = sorted(image_dir.glob("*.png"))
         self.annotations = sorted(annotations_dir.glob("*.json"))
-        self.transform = transforms.Compose([
-                            transforms.Resize((720, 1280)),  
-                            transforms.ToTensor(),
-])
+        self.transform = v2.Compose([
+                v2.Resize((720, 1280)),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+            ])
+
     
     def __len__(self):
         return len(self.images)
@@ -39,7 +43,8 @@ class FootballDataset:
     # 7. Create full-size mask using origin to position it correctly
     def __getitem__(self, idx):
         image = Image.open(self.images[idx]).convert('RGB')
-        image = self.transform(image)
+
+        
         with open(self.annotations[idx], 'r') as f:
             annotations = json.load(f)
 
@@ -56,8 +61,13 @@ class FootballDataset:
         mask_h, mask_w = small_mask.shape[:2]
         full_mask[y:y+mask_h, x:x+mask_w] = small_mask if small_mask.ndim == 2 else small_mask[:,:,0]
 
-        full_mask = torch.tensor(full_mask, dtype=torch.float32)
-        return image, full_mask
+        full_mask = Image.fromarray(full_mask)  
+
+   
+        image, mask = self.transform(image, full_mask)
+        mask = mask.squeeze(0)
+        
+        return image, mask  
     
     def visualize(self, idx):
         image, mask = self[idx]
@@ -83,6 +93,7 @@ if __name__ == "__main__":
 
     dataset = FootballDataset(data_dir="../football")
     dataset.visualize(20)
+    print(len(dataset))
 
     
 

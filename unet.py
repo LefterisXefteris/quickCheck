@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torchvision import models
 from torch.nn.functional import relu, sigmoid
+import PIL
 
 
 
@@ -27,17 +28,24 @@ class UNet(nn.Module):
 
 
 if __name__ == "__main__":
-    from data_e import FootballDataset
-    
+    from data_e import FootballDataset  
+
     dataset = FootballDataset()
-    model = UNet(3, 1)
     dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
 
-    EPOCH = 15
-
-
     for images, masks in dataloader:
-        pass
+        print(images.shape)
+        print(masks.shape)
+        break
 
-        
+
+
+
+
     
+
+
+    
+    
+
+
